@@ -45,6 +45,10 @@ export default {
       // 加载动画
       this.conversation.push({role:"assistant",content:"..."});
       this.loadingTimer = setInterval(() => {
+        if(this.conversation.length <= this.loadingMessage){
+          clearInterval(this.loadingTimer);
+          this.loadingTimer = null;
+        }
         if (this.conversation[this.loadingMessage].content.length < 5) {
           this.conversation[this.loadingMessage].content += '.'
         } else {
@@ -53,15 +57,10 @@ export default {
       },200);
 
       // 发送请求
-      ChatGPT.setConfig({
-        apiUrl:Common.config.apiUrl,
-        apiKey:Common.config.apiKey,
-        model:Common.config.apiModel,
-        temperature:Common.config.apiTemp,
-        max_tokens:Common.config.apiMaxTokens,
-        stop:Common.config.apiStop
-      });
-      ChatGPT.streamPost(messages,this.getResponseStream);
+      if(Common.config.stream)
+        ChatGPT.streamPost(messages,this.getResponseStream);
+      else
+        ChatGPT.post(messages,this.getResponse);
 
       this.inputText = "";
 
@@ -79,6 +78,7 @@ export default {
       this.conversation[this.loadingMessage] = response.message;
       this.loadingMessage = -1;
     },
+
     // 获得回复（流式）
     getResponseStream(response){
       if(this.loadingTimer != null){

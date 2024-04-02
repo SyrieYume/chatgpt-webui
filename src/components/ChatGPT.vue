@@ -1,49 +1,22 @@
 <script>
 import axios from 'axios';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
-
-var config = {
-    apiUrl:"",
-    apiKey:"",
-    model:"",
-    temperature:0.5,
-    max_tokens:100,
-    stop:""
-};
-
-function setUrl(apiUrl){
-    config.apiUrl = apiUrl;
-}
-function setModel(model){
-    config.model = model;
-}
-function setApiKey(key){
-    config.apiKey = key;
-}
-function setConfig(data){
-    for(let key in data){
-        config[key] = data[key];
-    }
-}
-function getConfig(){
-    return config;
-}
+import Common from './Common.vue';
 
 function post(messages,callback){
     const data = {
         "messages":messages,
-        //"messages": [{"role":"user","content":prompt}],
-        "model":config.model,
-        "temperature": config.temperature,
-        "max_tokens": config.max_tokens,
-        "stop": config.stop
+        "model":Common.config.apiModel,
+        "temperature": Common.config.apiTemp,
+        "max_tokens": Common.config.apiMaxTokens,
+        "stop": Common.config.apiStop
     };
     const headers = {
         'Content-Type': 'application/json',
-        'Authorization': "Bearer " + config.apiKey,
+        'Authorization': "Bearer " + Common.config.apiKey,
     };
-    console.log(config)
-    axios.post(config.apiUrl+"/v1/chat/completions/", data, { headers })
+    
+    axios.post(Common.config.apiUrl+"/v1/chat/completions", data, { headers })
     .then(response => {
         console.log(response);
         callback({message:response.data.choices[0].message,error:false});
@@ -54,20 +27,43 @@ function post(messages,callback){
     })
 }
 
+function getModels(callback){
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': "Bearer " + Common.config.apiKey,
+    };
+    axios.get(Common.config.apiUrl+"/v1/models", { headers })
+    .then(response => {
+        console.log(response)
+        if(response.status == 200){
+            const models = []
+            response.data.data.forEach(model => {
+                models.push(model.id)
+            });
+            callback(models);
+        }else
+            callback(["gpt-3.5-turbo"])
+    })
+    .catch(error => {
+        console.error(error);
+        callback(["gpt-3.5-turbo"]);
+    })
+}
+
 function streamPost(messages,callback){
     const data = {
         "messages":messages,
-        "model":config.model,
-        "temperature": config.temperature,
-        "max_tokens": config.max_tokens,
-        "stop": config.stop,
+        "model":Common.config.apiModel,
+        "temperature": Common.config.apiTemp,
+        "max_tokens": Common.config.apiMaxTokens,
+        "stop": Common.config.apiStop,
         "stream":true
     };
     const headers = {
         'Content-Type': 'application/json',
-        'Authorization': "Bearer " + config.apiKey,
+        'Authorization': "Bearer " + Common.config.apiKey,
     };
-    const eventSource = fetchEventSource(config.apiUrl+"/v1/chat/completions/",{
+    const eventSource = fetchEventSource(Common.config.apiUrl+"/v1/chat/completions",{
         "method":"POST",
         "body":JSON.stringify(data),
         "headers":headers,
@@ -98,15 +94,10 @@ function streamPost(messages,callback){
     })
 
 }
-export default{
+export default {
     name:"ChatGPT",
-    config,
-    setUrl,
-    setApiKey,
-    setModel,
-    setConfig,
-    getConfig,
     post,
-    streamPost
+    streamPost,
+    getModels
 }
 </script>

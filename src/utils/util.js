@@ -12,10 +12,24 @@ export function getCookie(key){
   for (var i = 0; i < arrStr.length; i++) {
     var temp = arrStr[i].split("=");
     if (temp[0] == key)
-        return decodeURIComponent(temp[1]);
+        return decodeURIComponent(arrStr[i].replace(temp[0]+"=",""));
   }
   return "";
 }
+
+// 获取所有cookie
+export function getCookies(){
+  const cookies = {}
+  var arrStr = document.cookie.split("; ");
+  for (var i = 0; i < arrStr.length; i++) {
+    var temp = arrStr[i].split("=");
+    let key = temp[0]
+    let value = decodeURIComponent(arrStr[i].replace(temp[0]+"=",""))
+    cookies[key] = value
+  }
+  return cookies;
+}
+
 
 // 将图片转换为 Base64 编码的字符串
 export function imageToBase64(image) {

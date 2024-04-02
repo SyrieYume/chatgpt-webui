@@ -1,5 +1,5 @@
 <script>
-import { getCookie } from '@/utils/util';
+import { getCookies } from '@/utils/util';
 
 var config = {
   apiUrl:"",
@@ -7,13 +7,20 @@ var config = {
   apiModel:"gpt-3.5-turbo",
   apiTemp:0.6,
   apiMaxTokens:200,
-  apiStop:"\0"
+  apiStop:"\0",
+  stream: true
 };
 
+let cookies = getCookies()
+console.log(cookies)
 for(let key in config){
-  let cookie = getCookie(key);
-  if(cookie != "")
-    config[key] = config[key].constructor(cookie);
+  if(key in cookies){
+    if(typeof config[key] == "string")
+      config[key] = cookies[key];
+    else
+      config[key] = eval(cookies[key]);
+  }
+    
 }
 
 var headIcon = localStorage.getItem("headIcon");

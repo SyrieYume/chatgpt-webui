@@ -2,6 +2,7 @@
 import {saveCookie,getCookie} from "../utils/util"
 import ImageCropper from "@/components/ImageCropper.vue";
 import Common from "@/components/Common.vue";
+import ChatGPT from "@/components/ChatGPT.vue"
 
 export default {
   name:"SettingsView",
@@ -13,15 +14,24 @@ export default {
       headIcon:"",
       apiModel:"",
       apiTemp:0,
-      apiMaxTokens:0
+      apiMaxTokens:0,
+      supportModels: [],
+      stream: true
     };
   },
   mounted() {
-    for(let key in this.$data)
+    for(let key in Common.config)
       this.$data[key] = Common.config[key];
+    this.supportModels = [this.apiModel]
     this.headIcon = Common.headIcon;
   },
   methods: {
+    getModels(){
+      if(this.supportModels.length < 2 && this.apiUrl!="" && this.apiKey!="")
+        ChatGPT.getModels(models => {
+          this.supportModels = models
+        })
+    },
     saveData(){
       for(let key in this.$data){
         saveCookie(key,this.$data[key],1000);
@@ -62,8 +72,8 @@ export default {
     <div class="column">
       <b>模型: </b><br/>
       <p class="tip">选择使用的语言模型。</p>
-      <select class="input" v-model="apiModel">
-        <option>gpt-3.5-turbo</option>
+      <select class="input" v-model="apiModel" v-on:focus="getModels()">
+        <option v-for="model in supportModels">{{model}}</option>
       </select>
     </div>
 
@@ -77,6 +87,12 @@ export default {
       <b>最大token数量: </b><br/>
       <p class="tip">控制生成文本的长度，一个单词、空格、标点符号都可能占用一个token，建议50到200之间。</p>
       <input class="input" type="number" v-model="apiMaxTokens"/>
+    </div>
+
+    <div class="column">
+      <b>流式传输: &nbsp;</b><input type="checkbox" v-model="stream">
+      <br/>
+      <p class="tip">关闭后，需要等整个回答生成完毕才能收到回复。</p>
     </div>
 
     <button class="button" @click="saveData">保存</button>
